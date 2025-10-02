@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  texas-lotto-v2:
+    build: .
+    ports:
+      - "5051:5000"
+    volumes:
+      - /mnt/storageblock/texas-lotto-v2:/app
+    environment:
+      - DB_PASSWORD=paperless
+    networks:
+      - paperless-ng_default
+
+networks:
+  paperless-ng_default:
+    external: true

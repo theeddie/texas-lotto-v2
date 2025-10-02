@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Texas Lottery - All Winners</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/templatemo_main.css">
+  <style>
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .search-input, .search-select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .btn-search {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-search:hover {
+      background: #5568d3;
+    }
+    .results-info {
+      padding: 15px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pagination {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .pagination button {
+      padding: 8px 15px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+    }
+    th:hover {
+      background: #5568d3;
+    }
+    th.sortable::after {
+      content: ' ⇅';
+      opacity: 0.5;
+    }
+    th.sort-asc::after {
+      content: ' ▲';
+      opacity: 1;
+    }
+    th.sort-desc::after {
+      content: ' ▼';
+      opacity: 1;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:hover {
+      background: #f8f9fa;
+    }
+    .win-count-badge {
+      background: #ff9800;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .amount-high {
+      color: #4caf50;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar navbar-inverse" role="navigation">
+    <div class="navbar-header">
+      <div class="logo"><h1>🎰 Texas Lottery Winners</h1></div>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="template-page-wrapper">
+    <div class="navbar-collapse collapse templatemo-sidebar">
+      <ul class="templatemo-sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>Dashboard</a></li>
+        <li class="active"><a href="tables.html"><i class="fa fa-trophy"></i>All Winners</a></li>
+        <li><a href="data-visualization.html"><i class="fa fa-bar-chart"></i>Statistics</a></li>
+        <li><a href="maps.html"><i class="fa fa-map-marker"></i>Retailer Sales</a></li>
+      </ul>
+    </div>
+
+    <div class="templatemo-content-wrapper">
+      <div class="templatemo-content">
+        <ol class="breadcrumb">
+          <li><a href="index.html">Home</a></li>
+          <li class="active">All Winners</li>
+        </ol>
+        <h1>Texas Lottery Winners</h1>
+        <p>Search, filter, and sort through all lottery winners</p>
+
+        <!-- Search/Filter Section -->
+        <div class="search-grid">
+          <div>
+            <label>Name</label>
+            <input type="text" id="search-name" class="search-input" placeholder="Search by name...">
+          </div>
+          <div>
+            <label>City</label>
+            <input type="text" id="search-city" class="search-input" placeholder="Search by city...">
+          </div>
+          <div>
+            <label>Min Amount</label>
+            <input type="number" id="search-amount" class="search-input" placeholder="Minimum $...">
+          </div>
+          <div>
+            <label>Sort By</label>
+            <select id="sort-by" class="search-select">
+              <option value="date">Date</option>
+              <option value="amount">Amount</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+          <div>
+            <label>Order</label>
+            <select id="sort-order" class="search-select">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button onclick="searchWinners()" class="btn-search">Search</button>
+          </div>
+        </div>
+
+        <!-- Results Info -->
+        <div class="results-info">
+          <div>
+            <strong>Showing:</strong> <span id="showing-count">0</span> of <span id="total-count">0</span> winners
+          </div>
+          <div>
+            <strong>Page:</strong> <span id="current-page">1</span>
+          </div>
+        </div>
+
+        <!-- Winners Table -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortBy('name')">Name</th>
+                <th class="sortable" onclick="sortBy('amount')">Amount</th>
+                <th class="sortable" onclick="sortBy('date')">Date</th>
+                <th>City</th>
+                <th>Game</th>
+                <th>Wins</th>
+              </tr>
+            </thead>
+            <tbody id="winners-table">
+              <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <button onclick="previousPage()" id="prev-btn">Previous</button>
+          <span>Page <span id="page-display">1</span></span>
+          <button onclick="nextPage()" id="next-btn">Next</button>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="templatemo-footer">
+      <div class="templatemo-copyright">
+        <p>Data from Texas.gov • Texas Lottery Commission</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/templatemo_script.js"></script>
+  <script>
+    let currentPage = 1;
+    const limit = 50;
+    let currentSort = 'date';
+    let currentOrder = 'desc';
+
+    function searchWinners() {
+      currentPage = 1;
+      loadWinners();
+    }
+
+    function sortBy(column) {
+      if (currentSort === column) {
+        currentOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+      } else {
+        currentSort = column;
+        currentOrder = 'desc';
+      }
+      document.getElementById('sort-by').value = column;
+      document.getElementById('sort-order').value = currentOrder;
+      updateSortHeaders();
+      loadWinners();
+    }
+
+    function updateSortHeaders() {
+      document.querySelectorAll('th.sortable').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+      });
+      const headers = {
+        'name': 0,
+        'amount': 1,
+        'date': 2
+      };
+      const index = headers[currentSort];
+      if (index !== undefined) {
+        const th = document.querySelectorAll('th.sortable')[index];
+        th.classList.add(currentOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+      }
+    }
+
+    function nextPage() {
+      currentPage++;
+      loadWinners();
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadWinners();
+      }
+    }
+
+    function loadWinners() {
+      const name = document.getElementById('search-name').value;
+      const city = document.getElementById('search-city').value;
+      const amount = document.getElementById('search-amount').value;
+      const sortBy = document.getElementById('sort-by').value;
+      const sortOrder = document.getElementById('sort-order').value;
+      const offset = (currentPage - 1) * limit;
+
+      let url = `/api/winners?limit=${limit}&offset=${offset}&sort_by=${sortBy}&sort_order=${sortOrder}`;
+      if (name) url += `&name=${encodeURIComponent(name)}`;
+      if (city) url += `&city=${encodeURIComponent(city)}`;
+      if (amount) url += `&min_amount=${amount}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById('winners-table').innerHTML =
+              `<tr><td colspan="6" style="text-align: center; color: red;">Error: ${data.error}</td></tr>`;
+            return;
+          }
+
+          const tbody = document.getElementById('winners-table');
+          if (!data.winners || data.winners.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No winners found</td></tr>';
+            document.getElementById('showing-count').textContent = '0';
+            document.getElementById('total-count').textContent = '0';
+            return;
+          }
+
+          tbody.innerHTML = data.winners.map(winner => `
+            <tr>
+              <td>${winner.name}</td>
+              <td class="${winner.raw_amount >= 1000000 ? 'amount-high' : ''}">${winner.amount}</td>
+              <td>${winner.date}</td>
+              <td>${winner.city}, ${winner.state}</td>
+              <td>${winner.game_category}</td>
+              <td><span class="win-count-badge">${winner.win_count}x</span></td>
+            </tr>
+          `).join('');
+
+          document.getElementById('showing-count').textContent = data.showing;
+          document.getElementById('total-count').textContent = data.count;
+          document.getElementById('current-page').textContent = currentPage;
+          document.getElementById('page-display').textContent = currentPage;
+
+          document.getElementById('prev-btn').disabled = currentPage === 1;
+          document.getElementById('next-btn').disabled = data.showing < limit;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('winners-table').innerHTML =
+            '<tr><td colspan="6" style="text-align: center; color: red;">Error loading winners</td></tr>';
+        });
+    }
+
+    // Load initial data
+    window.onload = function() {
+      loadWinners();
+      updateSortHeaders();
+
+      // Allow Enter key to search
+      document.querySelectorAll('.search-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            searchWinners();
+          }
+        });
+      });
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Texas Lottery - Retailer Sales</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/templatemo_main.css">
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <style>
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .search-input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .btn-search {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .pagination {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .pagination button {
+      padding: 8px 15px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:hover {
+      background: #f8f9fa;
+    }
+    .map-link {
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .map-link:hover {
+      color: #5568d3;
+    }
+    .map-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+    }
+    .map-modal-content {
+      position: relative;
+      background-color: white;
+      margin: 5% auto;
+      padding: 0;
+      width: 80%;
+      max-width: 900px;
+      height: 70vh;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .map-close {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      z-index: 1001;
+      background: white;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar navbar-inverse" role="navigation">
+    <div class="navbar-header">
+      <div class="logo"><h1>🎰 Texas Lottery Winners</h1></div>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="template-page-wrapper">
+    <div class="navbar-collapse collapse templatemo-sidebar">
+      <ul class="templatemo-sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>Dashboard</a></li>
+        <li><a href="tables.html"><i class="fa fa-trophy"></i>All Winners</a></li>
+        <li><a href="data-visualization.html"><i class="fa fa-bar-chart"></i>Statistics</a></li>
+        <li class="active"><a href="maps.html"><i class="fa fa-map-marker"></i>Retailer Sales</a></li>
+      </ul>
+    </div>
+
+    <div class="templatemo-content-wrapper">
+      <div class="templatemo-content">
+        <ol class="breadcrumb">
+          <li><a href="index.html">Home</a></li>
+          <li class="active">Retailer Sales</li>
+        </ol>
+        <h1>Retailer Scratch Ticket Sales</h1>
+        <p>Search retailers and view locations on map</p>
+
+        <!-- Search Section -->
+        <div class="search-grid">
+          <div>
+            <label>Retailer Name</label>
+            <input type="text" id="search-retailer" class="search-input" placeholder="Search retailer...">
+          </div>
+          <div>
+            <label>City</label>
+            <input type="text" id="search-city" class="search-input" placeholder="Search city...">
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button onclick="searchSales()" class="btn-search">Search</button>
+          </div>
+        </div>
+
+        <!-- Results Info -->
+        <div style="padding: 15px; background: #e3f2fd; border-radius: 4px; margin-bottom: 15px;">
+          <strong>Showing:</strong> <span id="showing-count">0</span> of <span id="total-count">0</span> retailers
+        </div>
+
+        <!-- Sales Table -->
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Retailer</th>
+                <th>Address</th>
+                <th>City</th>
+                <th>Total Sales</th>
+                <th>Game Varieties</th>
+                <th>Map</th>
+              </tr>
+            </thead>
+            <tbody id="sales-table">
+              <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <button onclick="previousPage()" id="prev-btn">Previous</button>
+          <span>Page <span id="page-display">1</span></span>
+          <button onclick="nextPage()" id="next-btn">Next</button>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="templatemo-footer">
+      <div class="templatemo-copyright">
+        <p>Data from Texas.gov • Texas Lottery Commission</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Map Modal -->
+  <div id="mapModal" class="map-modal">
+    <div class="map-modal-content">
+      <span class="map-close" onclick="closeMap()">&times;</span>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/templatemo_script.js"></script>
+  <script>
+    let currentPage = 1;
+    const limit = 50;
+    let map = null;
+    let marker = null;
+
+    function searchSales() {
+      currentPage = 1;
+      loadSales();
+    }
+
+    function nextPage() {
+      currentPage++;
+      loadSales();
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadSales();
+      }
+    }
+
+    function loadSales() {
+      const retailer = document.getElementById('search-retailer').value;
+      const city = document.getElementById('search-city').value;
+      const offset = (currentPage - 1) * limit;
+
+      let url = `/api/sales?limit=${limit}&offset=${offset}`;
+      if (retailer) url += `&retailer=${encodeURIComponent(retailer)}`;
+      if (city) url += `&city=${encodeURIComponent(city)}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.getElementById('sales-table');
+          if (!data.sales || data.sales.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No sales found</td></tr>';
+            document.getElementById('showing-count').textContent = '0';
+            document.getElementById('total-count').textContent = '0';
+            return;
+          }
+
+          tbody.innerHTML = data.sales.map(sale => `
+            <tr>
+              <td>${sale.location}</td>
+              <td>${sale.address}</td>
+              <td>${sale.city}, ${sale.state}</td>
+              <td>${sale.total_sales}</td>
+              <td style="text-align: center;" title="${sale.transaction_count} different game types sold per month">${sale.transaction_count}</td>
+              <td><span class="map-link" onclick='showMap(${JSON.stringify(sale)})'>📍 View Map</span></td>
+            </tr>
+          `).join('');
+
+          document.getElementById('showing-count').textContent = data.showing;
+          document.getElementById('total-count').textContent = data.count;
+          document.getElementById('page-display').textContent = currentPage;
+
+          document.getElementById('prev-btn').disabled = currentPage === 1;
+          document.getElementById('next-btn').disabled = data.showing < limit;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    function showMap(sale) {
+      document.getElementById('mapModal').style.display = 'block';
+
+      const address = sale.address;
+      const city = sale.city;
+      const state = sale.state;
+      const zip = sale.zip;
+
+      // Triple-fallback geocoding
+      const geocodeUrl1 = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}&postalcode=${encodeURIComponent(zip)}&country=USA&format=json&limit=1`;
+      const geocodeUrl2 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', ' + city + ', ' + state + ' ' + zip)}&format=json&limit=1`;
+      const geocodeUrl3 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city + ', ' + state + ' ' + zip)}&format=json&limit=1`;
+
+      fetch(geocodeUrl1)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            initMap(parseFloat(data[0].lon), parseFloat(data[0].lat), sale);
+          } else {
+            return fetch(geocodeUrl2).then(r => r.json());
+          }
+        })
+        .then(data => {
+          if (data && data.length > 0) {
+            initMap(parseFloat(data[0].lon), parseFloat(data[0].lat), sale);
+          } else {
+            return fetch(geocodeUrl3).then(r => r.json());
+          }
+        })
+        .then(data => {
+          if (data && data.length > 0) {
+            initMap(parseFloat(data[0].lon), parseFloat(data[0].lat), sale);
+          } else {
+            alert('Could not find location on map. Address may be incomplete.');
+            closeMap();
+          }
+        })
+        .catch(error => {
+          console.error('Geocoding error:', error);
+          alert('Error loading map location');
+          closeMap();
+        });
+    }
+
+    function initMap(lon, lat, sale) {
+      if (map) {
+        map.remove();
+      }
+
+      map = new maplibregl.Map({
+        container: 'map',
+        style: {
+          version: 8,
+          sources: {
+            'osm': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [{
+            id: 'osm',
+            type: 'raster',
+            source: 'osm',
+            minzoom: 0,
+            maxzoom: 19
+          }]
+        },
+        center: [lon, lat],
+        zoom: 16
+      });
+
+      marker = new maplibregl.Marker({ color: '#FF0000' })
+        .setLngLat([lon, lat])
+        .setPopup(new maplibregl.Popup().setHTML(`
+          <strong>${sale.location}</strong><br>
+          ${sale.address}<br>
+          ${sale.city}, ${sale.state} ${sale.zip}<br>
+          <strong>Total Sales:</strong> ${sale.total_sales}
+        `))
+        .addTo(map);
+
+      marker.togglePopup();
+    }
+
+    function closeMap() {
+      document.getElementById('mapModal').style.display = 'none';
+      if (map) {
+        map.remove();
+        map = null;
+      }
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('mapModal');
+      if (event.target == modal) {
+        closeMap();
+      }
+    }
+
+    window.onload = function() {
+      loadSales();
+
+      document.querySelectorAll('.search-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            searchSales();
+          }
+        });
+      });
+    };
+  </script>
+</body>
+</html>

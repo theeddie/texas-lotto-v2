@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Texas Lottery - Statistics</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/templatemo_main.css">
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+      margin: 10px 0;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .table-section {
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th {
+      background: #667eea;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    tr:hover {
+      background: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar navbar-inverse" role="navigation">
+    <div class="navbar-header">
+      <div class="logo"><h1>🎰 Texas Lottery Winners</h1></div>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="template-page-wrapper">
+    <div class="navbar-collapse collapse templatemo-sidebar">
+      <ul class="templatemo-sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>Dashboard</a></li>
+        <li><a href="tables.html"><i class="fa fa-trophy"></i>All Winners</a></li>
+        <li class="active"><a href="data-visualization.html"><i class="fa fa-bar-chart"></i>Statistics</a></li>
+        <li><a href="maps.html"><i class="fa fa-map-marker"></i>Retailer Sales</a></li>
+      </ul>
+    </div>
+
+    <div class="templatemo-content-wrapper">
+      <div class="templatemo-content">
+        <ol class="breadcrumb">
+          <li><a href="index.html">Home</a></li>
+          <li class="active">Statistics</li>
+        </ol>
+        <h1>Texas Lottery Statistics</h1>
+        <p>Comprehensive statistics and insights from Texas Lottery data</p>
+
+        <!-- Basic Stats -->
+        <div class="stats-grid" id="basic-stats">
+          <div class="stat-card">
+            <div class="stat-label">Total Winners</div>
+            <div class="stat-value" id="total-winners">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Winnings</div>
+            <div class="stat-value" id="total-amount">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Average Win</div>
+            <div class="stat-value" id="avg-amount">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Million Dollar Club</div>
+            <div class="stat-value" id="million-club">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Anonymous Winners</div>
+            <div class="stat-value" id="anon-winners">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Anonymous Total</div>
+            <div class="stat-value" id="anon-total">-</div>
+          </div>
+        </div>
+
+        <!-- Luckiest Cities -->
+        <div class="table-section">
+          <h2>🏙️ Luckiest Cities</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>City</th>
+                <th>Winners</th>
+                <th>Total Winnings</th>
+              </tr>
+            </thead>
+            <tbody id="lucky-cities">
+              <tr><td colspan="3" style="text-align: center;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Biggest Repeat Winners -->
+        <div class="table-section">
+          <h2>🏆 Biggest Repeat Winners</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Times Won</th>
+                <th>Total Winnings</th>
+                <th>Biggest Win</th>
+              </tr>
+            </thead>
+            <tbody id="repeat-winners">
+              <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="templatemo-footer">
+      <div class="templatemo-copyright">
+        <p>Data from Texas.gov • Texas Lottery Commission</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/templatemo_script.js"></script>
+  <script>
+    fetch('/api/stats')
+      .then(response => response.json())
+      .then(data => {
+        // Basic stats
+        document.getElementById('total-winners').textContent = data.total_winners.toLocaleString();
+        document.getElementById('total-amount').textContent = data.total_amount;
+        document.getElementById('avg-amount').textContent = data.average_amount;
+        document.getElementById('million-club').textContent = data.million_club.toLocaleString();
+        document.getElementById('anon-winners').textContent = data.anonymous_winners.toLocaleString();
+        document.getElementById('anon-total').textContent = data.anonymous_total;
+
+        // Luckiest cities
+        const citiesTbody = document.getElementById('lucky-cities');
+        if (data.lucky_cities && data.lucky_cities.length > 0) {
+          citiesTbody.innerHTML = data.lucky_cities.map(city => `
+            <tr>
+              <td>${city.city}</td>
+              <td>${city.winners.toLocaleString()}</td>
+              <td>${city.total}</td>
+            </tr>
+          `).join('');
+        } else {
+          citiesTbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No data</td></tr>';
+        }
+
+        // Repeat winners
+        const repeatTbody = document.getElementById('repeat-winners');
+        if (data.biggest_repeat_winners && data.biggest_repeat_winners.length > 0) {
+          repeatTbody.innerHTML = data.biggest_repeat_winners.map(winner => `
+            <tr>
+              <td>${winner.name}</td>
+              <td>${winner.times_won.toLocaleString()}x</td>
+              <td>${winner.total}</td>
+              <td>${winner.biggest}</td>
+            </tr>
+          `).join('');
+        } else {
+          repeatTbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No data</td></tr>';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading statistics:', error);
+      });
+  </script>
+</body>
+</html>

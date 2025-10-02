@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
+  <title>Texas Lottery Winners - Dashboard</title>
+  <meta name="keywords" content="texas lottery, winners, statistics" />
+  <meta name="description" content="Texas Lottery Winners Dashboard" />
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/templatemo_main.css">
+</head>
+<body>
+  <div class="navbar navbar-inverse" role="navigation">
+      <div class="navbar-header">
+        <div class="logo"><h1>🎰 Texas Lottery Winners</h1></div>
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+    </div>
+    <div class="template-page-wrapper">
+      <div class="navbar-collapse collapse templatemo-sidebar">
+        <ul class="templatemo-sidebar-menu">
+          <li class="active"><a href="index.html"><i class="fa fa-home"></i>Dashboard</a></li>
+          <li><a href="tables.html"><i class="fa fa-trophy"></i>All Winners</a></li>
+          <li><a href="data-visualization.html"><i class="fa fa-bar-chart"></i>Statistics</a></li>
+          <li><a href="maps.html"><i class="fa fa-map-marker"></i>Retailer Map</a></li>
+        </ul>
+      </div><!--/.navbar-collapse -->
+
+      <div class="templatemo-content-wrapper">
+        <div class="templatemo-content">
+          <ol class="breadcrumb">
+            <li><a href="index.html">Home</a></li>
+            <li class="active">Dashboard</li>
+          </ol>
+          <h1>Texas Lottery Dashboard</h1>
+          <p>Explore Texas Lottery winners data with comprehensive statistics and insights from the official Texas.gov database.</p>
+
+          <div class="margin-bottom-30">
+            <div class="row">
+              <div class="col-md-12">
+                <div id="stats-summary" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                  <!-- Stats will load here -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="templatemo-panels">
+            <div class="row">
+              <div class="col-md-12 margin-bottom-30">
+                <div class="panel panel-primary">
+                  <div class="panel-heading">🏆 Top 10 Winners</div>
+                  <div class="panel-body">
+                    <table class="table table-striped" id="top-winners-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Name</th>
+                          <th>Amount</th>
+                          <th>Date</th>
+                          <th>City</th>
+                          <th>Game</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="templatemo-footer">
+        <div class="templatemo-copyright">
+          <p>Data from Texas.gov • Texas Lottery Commission</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/templatemo_script.js"></script>
+    <script type="text/javascript">
+    // Load stats
+    fetch('/api/stats')
+      .then(response => response.json())
+      .then(data => {
+        const statsHtml = `
+          <div class="panel panel-success" style="flex: 1; min-width: 200px;">
+            <div class="panel-heading">Total Winners</div>
+            <div class="panel-body" style="font-size: 24px; font-weight: bold; text-align: center;">
+              ${data.total_winners ? data.total_winners.toLocaleString() : '0'}
+            </div>
+          </div>
+          <div class="panel panel-info" style="flex: 1; min-width: 200px;">
+            <div class="panel-heading">Total Winnings</div>
+            <div class="panel-body" style="font-size: 24px; font-weight: bold; text-align: center;">
+              ${data.total_amount || '$0'}
+            </div>
+          </div>
+          <div class="panel panel-warning" style="flex: 1; min-width: 200px;">
+            <div class="panel-heading">Biggest Win</div>
+            <div class="panel-body" style="font-size: 24px; font-weight: bold; text-align: center;">
+              ${data.max_win || '$0'}
+            </div>
+          </div>
+          <div class="panel panel-danger" style="flex: 1; min-width: 200px;">
+            <div class="panel-heading">Average Win</div>
+            <div class="panel-body" style="font-size: 24px; font-weight: bold; text-align: center;">
+              ${data.average_amount || '$0'}
+            </div>
+          </div>
+        `;
+        document.getElementById('stats-summary').innerHTML = statsHtml;
+      })
+      .catch(error => {
+        console.error('Error loading stats:', error);
+        document.getElementById('stats-summary').innerHTML = '<div class="alert alert-danger">Error loading statistics</div>';
+      });
+
+    // Load top 10 winners
+    fetch('/api/top10')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.querySelector('#top-winners-table tbody');
+        if (!data.winners || data.winners.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No winners found</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.winners.map(winner => `
+          <tr>
+            <td>${winner.rank}</td>
+            <td>${winner.name}</td>
+            <td>${winner.amount}</td>
+            <td>${winner.date}</td>
+            <td>${winner.city}, ${winner.state}</td>
+            <td>${winner.game_category}</td>
+          </tr>
+        `).join('');
+      })
+      .catch(error => {
+        console.error('Error loading winners:', error);
+        document.querySelector('#top-winners-table tbody').innerHTML = '<tr><td colspan="6" style="text-align: center;">Error loading winners</td></tr>';
+      });
+  </script>
+</body>
+</html>
