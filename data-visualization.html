@@ -147,6 +147,23 @@
           </table>
         </div>
 
+        <!-- Game Categories -->
+        <div class="table-section">
+          <h2>🎮 Game Categories</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Winners</th>
+                <th>Total Winnings</th>
+              </tr>
+            </thead>
+            <tbody id="game-categories">
+              <tr><td colspan="3" style="text-align: center;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
 
@@ -199,6 +216,20 @@
           `).join('');
         } else {
           repeatTbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No data</td></tr>';
+        }
+
+        // Game categories
+        const categoriesTbody = document.getElementById('game-categories');
+        if (data.game_categories && Object.keys(data.game_categories).length > 0) {
+          categoriesTbody.innerHTML = Object.entries(data.game_categories).map(([category, info]) => `
+            <tr>
+              <td><strong>${category}</strong></td>
+              <td>${info.count.toLocaleString()}</td>
+              <td style="color: #28a745; font-weight: bold;">${info.total}</td>
+            </tr>
+          `).join('');
+        } else {
+          categoriesTbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No data</td></tr>';
         }
       })
       .catch(error => {
